@@ -2,15 +2,17 @@
    ✏️  EDIT THIS PART — everything personal lives here
    ============================================================ */
 const CONFIG = {
-  name: "My Love",          // her name or nickname
+  name: "lab",              // her name or nickname
   from: "Your Name",        // how you sign the letter
 
   // Each string is one paragraph of the letter (typed out one by one)
   letter: [
-    "Happy birthday to the person who makes ordinary days feel like something worth remembering.",
-    "Thank you for your laugh, your patience, and the way you make me feel at home wherever we are.",
-    "I don't need a special day to be grateful for you, but today I get an excuse to say it out loud: I'm so lucky it's you.",
-    "Here's to another year of us. I can't wait to spend it by your side.",
+    "Happy birthday, lab! 🎂",
+    "First of all, thank you for always being there for me through the ups and downs, even if we fight all the time. Stay strong gihapon. I'm so proud of you for staying strong through everything that happened, and for accepting and forgiving me. Sorry gyud huhuuu.",
+    "As of now, bankrupt pa imong sugar chadiii, nyaa nalimtan pa gyud nako ang birthday greeting tungod ka busy sa thesis. I hope you'll forgive me. mobawi ra ko nimo promise. Ang pag-greet unta nimo ang pinakagamay nakong mahatag, pero na-disappoint pa nuon ka kay wala ko kagreet. Anyway, keep it up, lab. Makaginhawa ra gyud ta puhon, paabuton lang nato.",
+    "Always remember that I'm so proud of you and I'm your number 1 supporter, as always, bisan ako usahay ang hinungdan nganong masapot ka tungod sa akong kabogo ug katanga. Pero love gihapon ko nimo. Thank you, lab.",
+    "I hope you have a wonderful day today bisan na disappoint tika. Huhu, sorry gyud kaayo",
+    "ILOVEYOUUUUUUUU LAB, sorryyyyy huhu",
   ],
 
   // Tap-to-reveal cards (keep each one short)
@@ -183,9 +185,55 @@ window.addEventListener("resize", () => {
   cctx = fitCanvas(confettiCanvas);
 });
 
+/* ---------- "Dili na hilak" prank button ---------- */
+const noBtn = $("#noBtn");
+const noSlot = $("#noSlot");
+const yesBtn = $("#yesBtn");
+
+function teleportNo(e) {
+  e?.preventDefault();
+  const b = noBtn.getBoundingClientRect();
+
+  // First press: pop it out of the layout, leaving a same-size gap behind
+  if (!noBtn.classList.contains("runaway")) {
+    noSlot.style.width = `${b.width}px`;
+    noSlot.style.height = `${b.height}px`;
+    noBtn.style.left = `${b.left}px`;
+    noBtn.style.top = `${b.top}px`;
+    noBtn.classList.add("runaway");
+    noBtn.offsetWidth; // let the start position apply so it animates away
+  }
+
+  const pad = 16;
+  const yes = yesBtn.getBoundingClientRect();
+  let x, y, tries = 0;
+  do {
+    x = pad + Math.random() * (innerWidth - b.width - pad * 2);
+    y = pad + Math.random() * (innerHeight - b.height - pad * 2);
+    tries++;
+  } while (
+    tries < 20 &&
+    (Math.hypot(x - b.left, y - b.top) < 120 || // move somewhere noticeably different
+      (x < yes.right + 12 && x + b.width > yes.left - 12 && y < yes.bottom + 12 && y + b.height > yes.top - 12)) // don't cover OU
+  );
+
+  noBtn.style.left = `${x}px`;
+  noBtn.style.top = `${y}px`;
+  noBtn.style.transform = `rotate(${(Math.random() - 0.5) * 16}deg)`;
+}
+
+function resetNo() {
+  noBtn.classList.remove("runaway");
+  noBtn.removeAttribute("style");
+  noSlot.removeAttribute("style");
+}
+
+noBtn.addEventListener("pointerdown", teleportNo);
+noBtn.addEventListener("click", teleportNo); // keyboard presses
+
 /* ---------- Scene navigation ---------- */
 const scenes = {
-  "scene-intro": () => {},
+  "scene-intro": resetNo,
   "scene-letter": enterLetter,
   "scene-cake": enterCake,
   "scene-reasons": enterReasons,
@@ -253,11 +301,11 @@ async function typeLetter() {
 
     const text = document.createTextNode("");
     p.append(text, caret);
-    for (let i = 0; i < paragraph.length; i++) {
+    // Array.from keeps emoji whole instead of splitting them in half
+    for (const ch of Array.from(paragraph)) {
       if (typingSkip) { text.data = paragraph; break; }
-      text.data += paragraph[i];
-      const ch = paragraph[i];
-      await wait(/[.,!?:;]/.test(ch) ? 260 : 28 + Math.random() * 30);
+      text.data += ch;
+      await wait(/[.,!?:;]/.test(ch) ? 220 : 18 + Math.random() * 22);
     }
     caret.remove();
     if (!typingSkip) await wait(450);
