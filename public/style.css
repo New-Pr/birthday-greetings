@@ -21,17 +21,31 @@
 
 html, body { height: 100%; }
 
+html {
+  background: var(--night-1);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation; /* no double-tap zoom when she taps fast (e.g. the prank button) */
+}
+
 body {
   font-family: var(--sans);
   color: var(--paper);
+  /* (no background-attachment: fixed — it's broken on iOS Safari; body never scrolls anyway) */
   background:
     radial-gradient(ellipse 80% 60% at 50% 110%, rgba(255, 111, 145, .28), transparent 70%),
     radial-gradient(ellipse 60% 50% at 50% -10%, rgba(255, 213, 138, .10), transparent 70%),
     linear-gradient(180deg, var(--night-1), var(--night-2));
-  background-attachment: fixed;
+  min-height: 100vh;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+}
+
+button, .reason {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 canvas#hearts, canvas#confetti {
@@ -47,9 +61,16 @@ main { position: relative; z-index: 1; }
 /* ---------- Scenes ---------- */
 .scene {
   position: fixed; inset: 0;
-  display: grid; place-items: center;
-  padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column;
+  padding:
+    max(24px, calc(env(safe-area-inset-top) + 12px))
+    max(16px, env(safe-area-inset-right))
+    max(24px, calc(env(safe-area-inset-bottom) + 12px))
+    max(16px, env(safe-area-inset-left));
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   opacity: 0;
   visibility: hidden;
   transform: translateY(24px) scale(.98);
@@ -60,6 +81,9 @@ main { position: relative; z-index: 1; }
   transition: opacity .9s var(--ease-out) .25s, transform .9s var(--ease-out) .25s, visibility 0s;
 }
 .scene.leaving { transform: translateY(-24px) scale(.98); }
+/* auto margins center the content, but if it's taller than the phone screen
+   it starts at the top and scrolls instead of getting cut off */
+.scene > :not(.letter) { margin: auto; }
 
 .fade-up { opacity: 0; transform: translateY(16px); }
 .scene.active .fade-up { animation: fadeUp 1s var(--ease-out) forwards; animation-delay: var(--d, 0s); }
@@ -77,10 +101,14 @@ main { position: relative; z-index: 1; }
   box-shadow: 0 8px 20px -6px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255,255,255,.5);
   transition: transform .3s var(--ease-spring), box-shadow .3s;
 }
-.btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 12px 26px -6px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255,255,255,.5); }
+/* hover effects only on real mice, so they don't get "stuck" after a tap on iPhone */
+@media (hover: hover) {
+  .btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 12px 26px -6px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255,255,255,.5); }
+  .btn:hover span { animation: beat .8s ease-in-out infinite; }
+  .link-btn:hover { opacity: 1; }
+}
 .btn:active { transform: scale(.97); }
 .btn span { display: inline-block; margin-left: 4px; }
-.btn:hover span { animation: beat .8s ease-in-out infinite; }
 .btn-small { padding: 13px 24px; font-size: .95rem; }
 .btn:focus-visible, .link-btn:focus-visible, .envelope:focus-visible, .cake:focus-visible, .reason:focus-visible {
   outline: 2px solid var(--gold); outline-offset: 4px;
@@ -89,9 +117,8 @@ main { position: relative; z-index: 1; }
 .link-btn {
   background: none; border: 0; color: var(--blush);
   font: 500 .95rem var(--sans); cursor: pointer;
-  opacity: .75; padding: 8px; transition: opacity .2s;
+  opacity: .75; padding: 12px; transition: opacity .2s;
 }
-.link-btn:hover { opacity: 1; }
 
 /* ---------- Intro ---------- */
 .intro { text-align: center; max-width: 560px; }
@@ -136,21 +163,15 @@ main { position: relative; z-index: 1; }
 @keyframes wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-10deg); } 75% { transform: rotate(10deg); } }
 
 .choices { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-.no-slot { display: inline-block; }
+.no-slot { display: inline-block; position: relative; z-index: 2; }
 .btn-ghost {
   color: var(--blush);
   background: rgba(255, 255, 255, .06);
   border: 1px solid rgba(255, 198, 211, .4);
   box-shadow: none;
 }
-.btn-ghost:hover { box-shadow: none; background: rgba(255, 255, 255, .1); }
-#noBtn.runaway {
-  position: fixed;
-  z-index: 40;
-  margin: 0;
-  transition: left .35s var(--ease-spring), top .35s var(--ease-spring), transform .3s var(--ease-spring);
-}
-
+#noBtn { transition: transform .35s var(--ease-spring), background .3s; }
+@media (hover: hover) { #noBtn:hover { box-shadow: none; background: rgba(255, 255, 255, .1); } }
 /* ---------- Envelope ---------- */
 .envelope-wrap {
   display: flex; flex-direction: column; align-items: center; gap: 22px;
@@ -230,9 +251,14 @@ main { position: relative; z-index: 1; }
 /* ---------- Letter card ---------- */
 .letter {
   position: absolute;
+  left: 50%; top: 50%;
   width: min(560px, calc(100vw - 32px));
-  max-height: calc(100dvh - 48px);
+  /* fit between the iPhone notch and home bar; the letter scrolls inside itself */
+  max-height: calc(100vh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background:
     radial-gradient(circle at 100% 0, rgba(255, 198, 211, .45), transparent 40%),
     var(--paper);
@@ -241,11 +267,11 @@ main { position: relative; z-index: 1; }
   padding: clamp(28px, 6vw, 48px) clamp(22px, 6vw, 48px);
   box-shadow: 0 30px 80px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.4) inset;
   opacity: 0; visibility: hidden;
-  transform: translateY(60px) scale(.92) rotate(-1.5deg);
+  transform: translate(-50%, calc(-50% + 60px)) scale(.92) rotate(-1.5deg);
   transition: opacity .8s var(--ease-out), transform 1s var(--ease-spring), visibility 0s .8s;
 }
 .letter.show {
-  opacity: 1; visibility: visible; transform: none;
+  opacity: 1; visibility: visible; transform: translate(-50%, -50%);
   transition: opacity .8s var(--ease-out), transform 1s var(--ease-spring), visibility 0s;
 }
 .letter-to {
@@ -293,15 +319,19 @@ main { position: relative; z-index: 1; }
 /* ---------- Cake ---------- */
 .cake-stage { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .cake-title {
-  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-family: var(--serif); font-style: italic; font-weight: 500;
   font-size: clamp(1.8rem, 7vw, 2.6rem);
-  transition: opacity .5s, transform .5s;
+  max-height: 2.5em; overflow: hidden;
+  transition: opacity .5s, transform .5s, max-height .7s var(--ease-out) .3s;
 }
 .cake-sub {
   color: var(--blush); opacity: .85; margin: 6px 0 36px;
-  transition: opacity .5s;
+  max-height: 3em; overflow: hidden;
+  transition: opacity .5s, max-height .7s var(--ease-out) .3s, margin .7s var(--ease-out) .3s;
 }
-.cake-stage.blown .cake-title, .cake-stage.blown .cake-sub { opacity: 0; transform: translateY(-10px); }
+/* after blowing the candles, the hint text collapses so "Happy Birthday" fits on a phone screen */
+.cake-stage.blown .cake-title, .cake-stage.blown .cake-sub { opacity: 0; transform: translateY(-10px); max-height: 0; }
+.cake-stage.blown .cake-sub { margin: 0; }
 
 .cake {
   position: relative;
@@ -310,10 +340,15 @@ main { position: relative; z-index: 1; }
   border: 0; background: none; cursor: pointer;
   transition: transform .4s var(--ease-spring);
 }
-.cake:hover { transform: scale(1.03); }
+@media (hover: hover) { .cake:hover { transform: scale(1.03); } }
+/* phones (iPhone 12 Safari shows ~390×660 once the toolbars are visible) */
+@media (max-height: 760px) {
+  .cake { transform: scale(.88); margin: 30px 0 -14px; }
+  .cake-sub { margin-bottom: 20px; }
+  .hbd { margin-top: 16px !important; }
+}
 @media (max-width: 360px) {
   .cake { transform: scale(.8); margin: 20px 0 -30px; }
-  .cake:hover { transform: scale(.82); }
 }
 
 .plate {
@@ -433,8 +468,14 @@ main { position: relative; z-index: 1; }
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: 14px;
 }
+@media (max-width: 480px) {
+  .reasons { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .reason { height: 118px !important; }
+  .reason-back { font-size: .95rem !important; padding: 12px !important; }
+}
 .reason {
   perspective: 800px;
+  -webkit-perspective: 800px;
   height: 128px;
   opacity: 0; transform: translateY(24px);
   cursor: pointer;
@@ -443,6 +484,7 @@ main { position: relative; z-index: 1; }
 .scene.active .reason { animation: fadeUp .8s var(--ease-out) forwards; animation-delay: calc(.5s + var(--i) * 120ms); }
 .reason-inner {
   position: relative; width: 100%; height: 100%;
+  -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
   transition: transform .8s var(--ease-spring);
 }
@@ -455,13 +497,15 @@ main { position: relative; z-index: 1; }
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
 }
 .reason-front {
-  background: rgba(255, 255, 255, .06);
+  /* no backdrop-filter: it flattens the 3D flip in iOS Safari */
+  background: rgba(255, 255, 255, .08);
   border: 1px solid rgba(255, 198, 211, .25);
-  backdrop-filter: blur(6px);
   font-size: 2rem;
   transition: background .3s, border-color .3s;
 }
-.reason:hover .reason-front { background: rgba(255, 255, 255, .1); border-color: rgba(255, 198, 211, .5); }
+@media (hover: hover) {
+  .reason:hover .reason-front { background: rgba(255, 255, 255, .12); border-color: rgba(255, 198, 211, .5); }
+}
 .reason-front span { display: inline-block; animation: beat 2.2s ease-in-out infinite; animation-delay: calc(var(--i) * .3s); }
 .reason-back {
   background: linear-gradient(145deg, var(--paper), var(--blush));

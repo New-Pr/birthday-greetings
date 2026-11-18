@@ -190,46 +190,48 @@ const noBtn = $("#noBtn");
 const noSlot = $("#noSlot");
 const yesBtn = $("#yesBtn");
 
+// The button stays on screen and just hops a short random distance each press
+let offX = 0, offY = 0;
+
 function teleportNo(e) {
   e?.preventDefault();
-  const b = noBtn.getBoundingClientRect();
-
-  // First press: pop it out of the layout, leaving a same-size gap behind
-  if (!noBtn.classList.contains("runaway")) {
-    noSlot.style.width = `${b.width}px`;
-    noSlot.style.height = `${b.height}px`;
-    noBtn.style.left = `${b.left}px`;
-    noBtn.style.top = `${b.top}px`;
-    noBtn.classList.add("runaway");
-    noBtn.offsetWidth; // let the start position apply so it animates away
-  }
-
-  const pad = 16;
+  // Measure from the button's untransformed "home" spot (its wrapper never moves),
+  // so fast repeated taps mid-hop can't push it off screen
+  const home = noSlot.getBoundingClientRect();
+  const b = { width: noBtn.offsetWidth, height: noBtn.offsetHeight };
+  const baseX = home.left, baseY = home.top;
   const yes = yesBtn.getBoundingClientRect();
-  let x, y, tries = 0;
+  const pad = 24; // extra room for the little tilt
+
+  let nx, ny, x, y, tries = 0;
   do {
-    x = pad + Math.random() * (innerWidth - b.width - pad * 2);
-    y = pad + Math.random() * (innerHeight - b.height - pad * 2);
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 45 + Math.random() * 45; // short hop: 45–90px
+    nx = offX + Math.cos(angle) * dist;
+    ny = offY + Math.sin(angle) * dist;
+    // keep it fully on screen
+    nx = Math.min(Math.max(nx, pad - baseX), innerWidth - pad - b.width - baseX);
+    ny = Math.min(Math.max(ny, pad - baseY), innerHeight - pad - b.height - baseY);
     tries++;
+    x = baseX + nx; y = baseY + ny;
   } while (
     tries < 20 &&
-    (Math.hypot(x - b.left, y - b.top) < 120 || // move somewhere noticeably different
-      (x < yes.right + 12 && x + b.width > yes.left - 12 && y < yes.bottom + 12 && y + b.height > yes.top - 12)) // don't cover OU
+    x < yes.right + 8 && x + b.width > yes.left - 8 && y < yes.bottom + 8 && y + b.height > yes.top - 8 // don't cover OU
   );
 
-  noBtn.style.left = `${x}px`;
-  noBtn.style.top = `${y}px`;
-  noBtn.style.transform = `rotate(${(Math.random() - 0.5) * 16}deg)`;
+  offX = nx; offY = ny;
+  noBtn.style.transform = `translate(${offX}px, ${offY}px) rotate(${(Math.random() - 0.5) * 14}deg)`;
 }
 
 function resetNo() {
-  noBtn.classList.remove("runaway");
-  noBtn.removeAttribute("style");
-  noSlot.removeAttribute("style");
+  offX = offY = 0;
+  noBtn.style.transform = "";
 }
 
 noBtn.addEventListener("pointerdown", teleportNo);
-noBtn.addEventListener("click", teleportNo); // keyboard presses
+// iPhone fires both pointerdown AND click for one tap — only use click for keyboard presses
+// (detail === 0), otherwise every tap would hop twice
+noBtn.addEventListener("click", (e) => { if (e.detail === 0) teleportNo(e); });
 
 /* ---------- Scene navigation ---------- */
 const scenes = {
@@ -271,6 +273,8 @@ function enterLetter() {
   $("#letterSign").classList.remove("show");
   $("#toCake").classList.remove("show");
   letterBody.innerHTML = "";
+  letter.scrollTop = 0;
+  userScrolledUp = false;
   typingSkip = false;
   typingDone = false;
 }
@@ -305,6 +309,7 @@ async function typeLetter() {
     for (const ch of Array.from(paragraph)) {
       if (typingSkip) { text.data = paragraph; break; }
       text.data += ch;
+      followTyping();
       await wait(/[.,!?:;]/.test(ch) ? 220 : 18 + Math.random() * 22);
     }
     caret.remove();
@@ -313,6 +318,18 @@ async function typeLetter() {
   typingDone = true;
   $("#letterSign").classList.add("show");
   $("#toCake").classList.add("show");
+  // on a phone the letter is taller than the screen — glide down to the signature + button
+  setTimeout(() => letter.scrollTo({ top: letter.scrollHeight, behavior: "smooth" }), 500);
+}
+
+// Keep the newest typed line in view on small screens,
+// unless she has scrolled up to re-read something
+let userScrolledUp = false;
+letter.addEventListener("scroll", () => {
+  userScrolledUp = letter.scrollHeight - letter.scrollTop - letter.clientHeight > 90;
+}, { passive: true });
+function followTyping() {
+  if (!userScrolledUp) letter.scrollTop = letter.scrollHeight;
 }
 
 // Tap the letter to skip the typing
@@ -417,8 +434,12 @@ function enterReasons() {
       if (++flipped === CONFIG.reasons.length) {
         setTimeout(() => {
           finale.classList.add("show");
-          const r = finale.getBoundingClientRect();
-          launchConfetti(innerWidth / 2, r.top);
+          // on a phone the finale is below the cards — scroll it into view
+          finale.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => {
+            const r = finale.getBoundingClientRect();
+            launchConfetti(innerWidth / 2, r.top);
+          }, 450);
         }, 700);
       }
     };
