@@ -3,7 +3,7 @@
    ============================================================ */
 const CONFIG = {
   name: "lab",              // her name or nickname
-  from: "Your Name",        // how you sign the letter
+  from: "Chadiii",        // how you sign the letter
 
   // Each string is one paragraph of the letter (typed out one by one)
   letter: [
