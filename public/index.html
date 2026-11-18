@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1c0a1f" />
+  <title>Happy Birthday, My Love</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💖</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="hearts" aria-hidden="true"></canvas>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <main>
+    <!-- 1. Intro -->
+    <section class="scene active" id="scene-intro">
+      <div class="intro">
+        <div class="big-heart" aria-hidden="true">
+          <svg viewBox="0 0 32 29"><path d="M16 28.5S1 19.6 1 9.2C1 4.6 4.6 1 9 1c2.9 0 5.4 1.5 7 3.8C17.6 2.5 20.1 1 23 1c4.4 0 8 3.6 8 8.2 0 10.4-15 19.3-15 19.3z"/></svg>
+        </div>
+        <p class="eyebrow fade-up" style="--d:.2s">Hey <span data-name></span>,</p>
+        <h1 class="fade-up" style="--d:.5s">I made a little something<br/>just for you.</h1>
+        <button class="btn fade-up" style="--d:.9s" data-next="scene-letter">
+          Open it <span aria-hidden="true">♥</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. Letter -->
+    <section class="scene" id="scene-letter">
+      <div class="envelope-wrap" id="envelopeWrap">
+        <button class="envelope" id="envelope" aria-label="Open the letter">
+          <span class="env-back"></span>
+          <span class="env-letter"><span class="mini-lines"></span></span>
+          <span class="env-front"></span>
+          <span class="env-flap"></span>
+          <span class="env-seal" aria-hidden="true">♥</span>
+        </button>
+        <p class="hint">tap to open</p>
+      </div>
+
+      <article class="letter" id="letter" aria-live="polite">
+        <p class="letter-to">My dearest <span data-name></span>,</p>
+        <div class="letter-body" id="letterBody"></div>
+        <p class="letter-sign" id="letterSign">Forever yours,<br/><span data-from></span></p>
+        <button class="btn btn-small" id="toCake" data-next="scene-cake">One more thing <span aria-hidden="true">→</span></button>
+      </article>
+    </section>
+
+    <!-- 3. Cake -->
+    <section class="scene" id="scene-cake">
+      <div class="cake-stage">
+        <h2 class="cake-title" id="cakeTitle">Make a wish…</h2>
+        <p class="cake-sub" id="cakeSub">then tap the candles to blow them out</p>
+
+        <button class="cake" id="cake" aria-label="Blow out the candles">
+          <span class="candles" id="candles"></span>
+          <span class="tier tier-top"><span class="drip"></span></span>
+          <span class="tier tier-bottom"><span class="drip"></span><span class="sprinkles"></span></span>
+          <span class="plate"></span>
+        </button>
+
+        <h2 class="hbd" id="hbd" aria-hidden="true"></h2>
+        <button class="btn btn-small hidden-btn" id="toReasons" data-next="scene-reasons">Keep going <span aria-hidden="true">♥</span></button>
+      </div>
+    </section>
+
+    <!-- 4. Reasons -->
+    <section class="scene" id="scene-reasons">
+      <div class="reasons-wrap">
+        <h2 class="reasons-title">A few reasons I love you</h2>
+        <p class="reasons-sub">(tap each one)</p>
+        <ul class="reasons" id="reasons"></ul>
+        <div class="finale" id="finale">
+          <p class="finale-line" id="finaleLine"></p>
+          <button class="link-btn" id="replay">watch it again ↺</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
